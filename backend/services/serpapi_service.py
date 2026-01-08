@@ -15,8 +15,8 @@ class SerpApiService:
             "engine": "google_shopping",
             "q": query,
             "api_key": settings.SERPAPI_KEY,
-            "google_domain": "google.com",
-            "gl": "us", # Target US market for now
+            "google_domain": "google.co.in",
+            "gl": "in", # Target Indian market
             "hl": "en"
         }
 
@@ -39,12 +39,25 @@ class SerpApiService:
     def _normalize_results(self, results):
         """
         Normalize SerpApi data to our Product schema.
+        Ensures price is captured correctly from various SerpApi fields.
         """
         normalized = []
         for item in results:
+            # SerpApi can return price in 'price', 'extracted_price', or 'raw_price'
+            price = item.get("price") or item.get("extracted_price")
+            
+            # If price is a number (extracted_price), format it as ₹
+            if isinstance(price, (int, float)):
+                price = f"₹{price:,}"
+            elif price and "$" in str(price):
+                # Fallback: If for some reason it's still in USD, mark it clearly
+                # or we could do a rough conversion (1 USD ~ 83 INR)
+                # But gl: in should prevent this.
+                pass
+
             normalized.append({
                 "title": item.get("title"),
-                "price": item.get("price"),
+                "price": price or "Price N/A",
                 "source": item.get("source"),
                 "link": item.get("link"),
                 "thumbnail": item.get("thumbnail"),

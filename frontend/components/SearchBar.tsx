@@ -60,7 +60,7 @@ const SearchBar = ({ onSearch, isLoading }: SearchBarProps) => {
 
             <div className="flex gap-4 mt-6 justify-center text-sm text-gray-500">
                 <span>Popular:</span>
-                {['MacBook Air', 'PS5 Slim', 'Coffee Maker'].map((tag) => (
+                {['iPhone 15', 'OnePlus 12', 'Noise Smartwatch'].map((tag) => (
                     <button
                         key={tag}
                         type="button"
