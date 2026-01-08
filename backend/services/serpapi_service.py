@@ -21,11 +21,20 @@ class SerpApiService:
         }
 
         async with httpx.AsyncClient() as client:
+            print(f"Searching SerpApi for: {query}")
             response = await client.get(self.BASE_URL, params=params)
             response.raise_for_status()
             data = response.json()
             
-            return self._normalize_results(data.get("shopping_results", []))
+            results = data.get("shopping_results", [])
+            print(f"Found {len(results)} shopping results for: {query}")
+            
+            if not results:
+                print(f"SerpApi raw response keys: {data.keys()}")
+                if "error" in data:
+                    print(f"SerpApi Error: {data['error']}")
+            
+            return self._normalize_results(results)
 
     def _normalize_results(self, results):
         """

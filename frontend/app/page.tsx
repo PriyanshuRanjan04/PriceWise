@@ -13,15 +13,29 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setHasSearched(true);
+    setError(null);
     try {
-      const response = await api.get(`/api/v1/products/search?q=${query}`);
-      setProducts(response.data.results);
-    } catch (error) {
-      console.error('Search failed:', error);
+      // Use params for better encoding
+      const response = await api.get('/api/v1/products/search', {
+        params: { q: query }
+      });
+
+      if (response.data && response.data.results) {
+        setProducts(response.data.results);
+      } else {
+        setProducts([]);
+        console.warn('Empty or unexpected response structure:', response.data);
+      }
+    } catch (err: any) {
+      console.error('Search failed:', err);
+      const errorMessage = err.response?.data?.detail || err.message || 'An unexpected error occurred';
+      setError(errorMessage);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +136,25 @@ export default function Home() {
             </div>
           )}
 
-          {!isLoading && hasSearched && products.length === 0 && (
+          {!isLoading && error && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20 text-red-400 bg-red-400/5 rounded-3xl border border-red-400/10 max-w-2xl mx-auto"
+            >
+              <ShieldCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <h2 className="text-2xl font-bold mb-2">Search Error</h2>
+              <p>{error}</p>
+              <button
+                onClick={() => handleSearch('')}
+                className="mt-6 px-6 py-2 bg-red-400/10 hover:bg-red-400/20 rounded-full text-sm font-bold transition-all"
+              >
+                Try Again
+              </button>
+            </motion.div>
+          )}
+
+          {!isLoading && !error && hasSearched && products.length === 0 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
