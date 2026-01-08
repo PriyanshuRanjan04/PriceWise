@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
 import ProductCard from '@/components/ProductCard';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
-import { motion } from 'framer-motion';
+import { Search, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,51 +22,118 @@ export default function Home() {
       setProducts(response.data.results);
     } catch (error) {
       console.error('Search failed:', error);
-      // Optional: Add toast notification here
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-blue-500/30">
+      {/* Background Gradients */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute top-[20%] -right-[10%] w-[35%] h-[35%] bg-purple-600/10 blur-[120px] rounded-full" />
+        <div className="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] bg-indigo-600/15 blur-[120px] rounded-full animate-bounce" style={{ animationDuration: '10s' }} />
+      </div>
+
       <Navbar />
 
-      <main className="container mx-auto px-4 py-12">
-        <div className={`transition-all duration-500 ${hasSearched ? 'mt-0' : 'mt-20'}`}>
-          <div className="text-center mb-10 space-y-4">
-            <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight">
-              PriceWise
-            </h1>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              AI-powered price comparison across major retailers.
-              Find the best deals instantly.
-            </p>
-          </div>
+      <main className="relative container mx-auto px-4 pt-20 pb-24">
+        {/* Hero Section */}
+        <AnimatePresence mode="wait">
+          {!hasSearched && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="text-center mb-16 space-y-6"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>AI-Powered Price Intelligence</span>
+              </motion.div>
 
+              <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-none">
+                Shop <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">Smarter</span>.
+                <br />
+                Save <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400">Better</span>.
+              </h1>
+
+              <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+                Aggregating real-time prices from across the web. Get instant deals,
+                price tracking, and AI-driven recommendations in one place.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Search Section */}
+        <div className={`transition-all duration-700 ease-in-out ${hasSearched ? 'mt-0' : 'mt-0'}`}>
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </div>
 
+        {/* Features Row - Only show if not searched */}
+        {!hasSearched && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 max-w-5xl mx-auto"
+          >
+            {[
+              { icon: TrendingUp, title: 'Price Tracking', desc: 'Monitor price drops and history trends.' },
+              { icon: Search, title: 'Aggregated Search', desc: 'Search multiple retailers with one click.' },
+              { icon: ShieldCheck, title: 'Verified Deals', desc: 'AI-verified authentic discounts only.' },
+            ].map((feature, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors group">
+                <feature.icon className="w-10 h-10 text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </motion.div>
+        )}
+
         {/* Results Section */}
-        <div className="mt-16">
+        <div className="mt-20">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-80 bg-gray-200 rounded-xl animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {products.map((product, idx) => (
-                <ProductCard key={product.product_id || idx} product={product} />
+                <motion.div
+                  key={product.product_id || idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
               ))}
             </div>
           )}
 
           {!isLoading && hasSearched && products.length === 0 && (
-            <div className="text-center mt-12 text-gray-400">
-              <p>No products found. Try a different search term.</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20"
+            >
+              <div className="inline-flex p-6 rounded-full bg-white/5 mb-6">
+                <Search className="w-12 h-12 text-gray-500" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">No products found</h2>
+              <p className="text-gray-400">Try a different search term or check your filters.</p>
+            </motion.div>
           )}
         </div>
       </main>
