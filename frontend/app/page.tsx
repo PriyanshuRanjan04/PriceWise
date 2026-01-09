@@ -78,19 +78,19 @@ export default function Home() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-4"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium mb-4"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>AI-Powered Price Intelligence</span>
               </motion.div>
 
-              <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-none">
+              <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-none">
                 Shop <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">Smarter</span>.
                 <br />
                 Save <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400">Better</span>.
               </h1>
 
-              <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+              <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
                 Aggregating real-time prices from across the web. Get instant deals,
                 price tracking, and AI-driven recommendations in one place.
               </p>

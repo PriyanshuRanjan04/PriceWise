@@ -50,11 +50,6 @@ const Navbar = () => {
                                 <Link href="/products" className="hidden md:block px-5 py-2 rounded-full text-sm font-bold text-gray-300 hover:text-white transition-colors">
                                     Trending
                                 </Link>
-                                <SignInButton mode="modal">
-                                    <button className="text-gray-300 hover:text-white text-sm font-bold px-3">
-                                        Sign In
-                                    </button>
-                                </SignInButton>
                                 <SignUpButton mode="modal" forceRedirectUrl="/">
                                     <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
                                         Join Free
