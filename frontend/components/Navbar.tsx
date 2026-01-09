@@ -40,48 +40,44 @@ const Navbar = () => {
                             <Link href="/products" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <ShoppingBag className="w-4 h-4" /> Products
                             </Link>
-                            <Link href="/deals" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <Flame className="w-4 h-4 text-orange-500" /> Deals
-                            </Link>
-                            <Link href="/#track" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <TrendingDown className="w-4 h-4 text-green-500" /> Track Price
-                            </Link>
                             <Link href="/categories" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <Layers className="w-4 h-4" /> Categories
                             </Link>
-                            <Link href="/about" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
-                                <HelpCircle className="w-4 h-4" /> How It Works
+                            <Link href="/saved" className="text-sm font-medium text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2">
+                                <Heart className="w-4 h-4" /> Saved Items
                             </Link>
                             <Link href="/chat" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <MessageSquare className="w-4 h-4" /> AI Assistant
                             </Link>
-                            <SignedIn>
-                                <Link href="/saved" className="text-sm font-medium text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2">
-                                    <Heart className="w-4 h-4" /> Saved Items
-                                </Link>
-                            </SignedIn>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-4 border-r border-white/10 pr-6 mr-2">
+                            <Link href="/deals" className="text-xs font-bold text-gray-500 hover:text-orange-500 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
+                                <Flame className="w-3.5 h-3.5" /> Deals
+                            </Link>
+                            <Link href="/#track" className="text-xs font-bold text-gray-500 hover:text-green-500 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
+                                <TrendingDown className="w-3.5 h-3.5" /> Track
+                            </Link>
+                            <Link href="/about" className="text-xs font-bold text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wide">
+                                <HelpCircle className="w-3.5 h-3.5" /> Help
+                            </Link>
+                        </div>
+
                         <SignedOut>
-                            <div className="flex items-center gap-2">
-                                <Link href="/products" className="hidden md:block px-5 py-2 rounded-full text-sm font-bold text-gray-300 hover:text-white transition-colors">
-                                    Trending
-                                </Link>
-                                <SignUpButton mode="modal" forceRedirectUrl="/">
-                                    <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
-                                        Join Free
-                                    </button>
-                                </SignUpButton>
-                            </div>
+                            <SignUpButton mode="modal" forceRedirectUrl="/">
+                                <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
+                                    Join Free
+                                </button>
+                            </SignUpButton>
                         </SignedOut>
 
                         <SignedIn>
                             <UserButton
                                 appearance={{
                                     elements: {
-                                        avatarBox: "w-10 h-10"
+                                        avatarBox: "w-10 h-10 ring-2 ring-white/20 hover:ring-white/40 transition-all"
                                     }
                                 }}
                             />
