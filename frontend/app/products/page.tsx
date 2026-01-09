@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 function ProductsContent() {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [sortOrder, setSortOrder] = useState<'default' | 'asc' | 'desc'>('default');
     const searchParams = useSearchParams();
     const category = searchParams.get('category');
 
@@ -40,19 +41,42 @@ function ProductsContent() {
         ? category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')
         : 'Trending Products';
 
+    const sortedProducts = [...products].sort((a, b) => {
+        if (sortOrder === 'default') return 0;
+
+        const priceA = Number(a.price.replace(/[^0-9.-]+/g, ""));
+        const priceB = Number(b.price.replace(/[^0-9.-]+/g, ""));
+
+        return sortOrder === 'asc' ? priceA - priceB : priceB - priceA;
+    });
+
     return (
         <main className="container mx-auto px-4 pt-24 pb-12">
-            <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-blue-500/10 rounded-2xl">
-                    {category ? (
-                        <Filter className="w-8 h-8 text-blue-400" />
-                    ) : (
-                        <ShoppingBag className="w-8 h-8 text-blue-400" />
-                    )}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-blue-500/10 rounded-2xl">
+                        {category ? (
+                            <Filter className="w-8 h-8 text-blue-400" />
+                        ) : (
+                            <ShoppingBag className="w-8 h-8 text-blue-400" />
+                        )}
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-bold">{title}</h1>
+                        {category && <p className="text-gray-400 text-sm mt-1">Showing top results for {title}</p>}
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-3xl font-bold">{title}</h1>
-                    {category && <p className="text-gray-400 text-sm mt-1">Showing top results for {title}</p>}
+
+                <div className="flex items-center gap-2">
+                    <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value as 'default' | 'asc' | 'desc')}
+                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all cursor-pointer hover:bg-white/10"
+                    >
+                        <option value="default" className="bg-[#030712] text-gray-400">Sort by: Relevance</option>
+                        <option value="asc" className="bg-[#030712]">Price: Low to High</option>
+                        <option value="desc" className="bg-[#030712]">Price: High to Low</option>
+                    </select>
                 </div>
             </div>
 
@@ -62,8 +86,8 @@ function ProductsContent() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {products.length > 0 ? (
-                        products.map((product, idx) => (
+                    {sortedProducts.length > 0 ? (
+                        sortedProducts.map((product, idx) => (
                             <motion.div
                                 key={product.product_id || idx}
                                 initial={{ opacity: 0, y: 20 }}
