@@ -7,6 +7,9 @@ import ChatInterface from '@/components/ChatInterface';
 import LiveDemo from '@/components/LiveDemo';
 import TrustSection from '@/components/TrustSection';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
+import TrendingTicker from '@/components/TrendingTicker';
+import PopularDeals from '@/components/PopularDeals';
+import RecentlySearched from '@/components/RecentlySearched';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { Search, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
@@ -19,11 +22,19 @@ export default function Home() {
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
     setHasSearched(true);
     setError(null);
+
+    // Add to recent searches (prevent duplicates, keep top 5)
+    setRecentSearches(prev => {
+      const newSearches = [query, ...prev.filter(s => s !== query)].slice(0, 5);
+      return newSearches;
+    });
+
     try {
       // Parallel: Search Products & Save History (if authed)
       const searchPromise = api.get('/api/v1/products/search', {
@@ -96,6 +107,11 @@ export default function Home() {
                 Aggregating real-time prices from across the web. Get instant deals,
                 price tracking, and AI-driven recommendations in one place.
               </p>
+
+              {/* Ticker */}
+              <div className="max-w-3xl mx-auto mt-8">
+                <TrendingTicker onSearch={handleSearch} />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -103,6 +119,14 @@ export default function Home() {
         {/* Search Section */}
         <div className={`transition-all duration-700 ease-in-out ${hasSearched ? 'mt-0' : 'mt-0'}`}>
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+          {/* Recently Searched */}
+          <div className="max-w-3xl mx-auto px-4">
+            <RecentlySearched
+              searches={recentSearches}
+              onSelect={handleSearch}
+              onClear={() => setRecentSearches([])}
+            />
+          </div>
         </div>
 
         {/* New Components - Shown only on landing (no search) */}
@@ -112,6 +136,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
+            <PopularDeals />
             <LiveDemo />
             <TrustSection />
           </motion.div>

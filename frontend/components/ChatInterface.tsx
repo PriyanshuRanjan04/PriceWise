@@ -15,6 +15,39 @@ interface Message {
     relatedProducts?: Product[];
 }
 
+const TypingMessage = ({ content }: { content: string }) => {
+    const [displayedContent, setDisplayedContent] = useState('');
+    const [isComplete, setIsComplete] = useState(false);
+
+    useEffect(() => {
+        setDisplayedContent('');
+        setIsComplete(false);
+        let i = 0;
+        const speed = 15; // ms per char
+
+        const timer = setInterval(() => {
+            if (i < content.length) {
+                setDisplayedContent(prev => prev + content.charAt(i));
+                i++;
+            } else {
+                setIsComplete(true);
+                clearInterval(timer);
+            }
+        }, speed);
+
+        return () => clearInterval(timer);
+    }, [content]);
+
+    return (
+        <div className="prose prose-invert prose-sm">
+            <ReactMarkdown>{displayedContent}</ReactMarkdown>
+            {!isComplete && (
+                <span className="inline-block w-2 h-4 ml-1 bg-blue-500 animate-pulse align-middle" />
+            )}
+        </div>
+    );
+};
+
 export default function ChatInterface() {
     const { isSignedIn, user } = useUser();
     const router = useRouter();
@@ -38,7 +71,7 @@ export default function ChatInterface() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isOpen]);
+    }, [messages, isOpen, isLoading]); // Scroll on new messages or loading state
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -158,9 +191,14 @@ export default function ChatInterface() {
                                             : 'bg-white/10 text-gray-200 rounded-tl-sm'
                                             }`}
                                     >
-                                        <div className="prose prose-invert prose-sm">
-                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                        </div>
+                                        {msg.role === 'user' ? (
+                                            <div className="prose prose-invert prose-sm">
+                                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            /* Key prop forces re-render of typing effect when content changes (unlikely for history, but good for stream-like feel) */
+                                            <TypingMessage key={msg.content} content={msg.content} />
+                                        )}
                                     </div>
 
                                     {/* Related Products Carousel */}

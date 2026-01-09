@@ -1,4 +1,6 @@
-import { motion } from 'framer-motion';
+'use client';
+
+import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '@/types/product';
 import { ExternalLink, Star, ShoppingCart, Bell, Check } from 'lucide-react';
 import { useState } from 'react';
@@ -43,20 +45,41 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
 
                 {/* Track Button Overlay */}
                 <div className="absolute bottom-4 left-4 right-4 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <button
+                    <motion.button
                         onClick={handleTrack}
                         disabled={isTracking || isLoading}
-                        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xl ${isTracking
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-md'
+                        whileTap={{ scale: 0.95 }}
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xl overflow-hidden relative ${isTracking
+                            ? 'bg-green-500 text-white border border-green-600' // Solid green for better visibility
                             : 'bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md'
                             }`}
                     >
-                        {isTracking ? (
-                            <><Check className="w-3.5 h-3.5" /> Tracking</>
-                        ) : (
-                            <><Bell className="w-3.5 h-3.5" /> Track Price</>
-                        )}
-                    </button>
+                        <AnimatePresence mode='wait'>
+                            {isTracking ? (
+                                <motion.div
+                                    key="tracking"
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -20, opacity: 0 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Tracking Enabled</span>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="track"
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    exit={{ y: -20, opacity: 0 }}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Bell className="w-3.5 h-3.5" />
+                                    <span>Track Price</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.button>
                 </div>
 
                 <div className="absolute top-4 right-4 z-20">
