@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ShoppingBag, MessageSquare, Menu, Flame, TrendingDown, Layers, HelpCircle, Heart } from 'lucide-react';
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
