@@ -66,19 +66,11 @@ const Navbar = () => {
                         </div>
 
                         <SignedOut>
-                            <div className="flex items-center gap-3">
-                                <SignInButton mode="modal">
-                                    <button className="text-sm font-bold text-gray-300 hover:text-white transition-colors">
-                                        Sign in
-                                    </button>
-                                </SignInButton>
-                                <span className="text-gray-600">/</span>
-                                <SignUpButton mode="modal" forceRedirectUrl="/">
-                                    <button className="px-5 py-2 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
-                                        Sign up
-                                    </button>
-                                </SignUpButton>
-                            </div>
+                            <SignInButton mode="modal">
+                                <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
+                                    Sign in
+                                </button>
+                            </SignInButton>
                         </SignedOut>
 
                         <SignedIn>
