@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
 import ProductCard from '@/components/ProductCard';
+import ChatInterface from '@/components/ChatInterface';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { Search, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
@@ -169,6 +170,7 @@ export default function Home() {
           )}
         </div>
       </main>
+      <ChatInterface />
     </div>
   );
 }

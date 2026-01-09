@@ -41,3 +41,19 @@ async def get_price_history(product_id: str, db = Depends(get_database)):
         return {"history": product.get("history", [])}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tracked")
+async def get_tracked_products(db = Depends(get_database)):
+    """
+    Get all tracked products with their latest price and history.
+    """
+    try:
+        # Convert _id to string for JSON serialization
+        products = await db.products.find().to_list(length=100)
+        for p in products:
+            p["id"] = str(p["_id"])
+            del p["_id"]
+        return {"products": products}
+    except Exception as e:
+        print(f"Error fetching tracked products: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
