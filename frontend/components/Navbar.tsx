@@ -47,11 +47,9 @@ const Navbar = () => {
                     <div className="flex items-center gap-4">
                         <SignedOut>
                             <div className="hidden md:flex items-center gap-2">
-                                <SignInButton mode="modal">
-                                    <button className="px-5 py-2 rounded-full text-sm font-bold text-gray-300 hover:text-white transition-colors">
-                                        Sign In
-                                    </button>
-                                </SignInButton>
+                                <Link href="/products" className="px-5 py-2 rounded-full text-sm font-bold text-gray-300 hover:text-white transition-colors">
+                                    Trending
+                                </Link>
                                 <SignUpButton mode="modal">
                                     <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-black hover:bg-gray-200 transition-all shadow-lg active:scale-95">
                                         Join Free

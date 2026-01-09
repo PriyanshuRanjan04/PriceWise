@@ -6,6 +6,7 @@ import { Send, Bot, User, Sparkles, ShoppingCart, ChevronRight } from 'lucide-re
 import Navbar from '@/components/Navbar';
 import api from '@/lib/api';
 import ProductCard from '@/components/ProductCard';
+import { useUser } from '@clerk/nextjs';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -14,6 +15,7 @@ interface Message {
 }
 
 export default function ChatPage() {
+    const { isLoaded, isSignedIn, user } = useUser();
     const [messages, setMessages] = useState<Message[]>([
         {
             role: 'assistant',
@@ -23,6 +25,14 @@ export default function ChatPage() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [guestUsageCount, setGuestUsageCount] = useState(0);
+
+    useEffect(() => {
+        const storedCount = localStorage.getItem('guest_chat_usage');
+        if (storedCount) {
+            setGuestUsageCount(parseInt(storedCount));
+        }
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -36,6 +46,20 @@ export default function ChatPage() {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
 
+        // Guest Limit Check
+        if (isLoaded && !isSignedIn) {
+            if (guestUsageCount >= 5) {
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: "🔒 You've reached the free limit. Please **Sign In** to continue using the AI Assistant!"
+                }]);
+                return;
+            }
+            const newCount = guestUsageCount + 1;
+            setGuestUsageCount(newCount);
+            localStorage.setItem('guest_chat_usage', newCount.toString());
+        }
+
         const userMessage = input.trim();
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
@@ -44,7 +68,8 @@ export default function ChatPage() {
         try {
             const response = await api.post('/api/v1/chat/', {
                 message: userMessage,
-                include_search: true
+                include_search: true,
+                user_id: user?.id
             });
 
             setMessages(prev => [...prev, {
@@ -85,8 +110,8 @@ export default function ChatPage() {
 
                                 <div className={`max-w-[80%] space-y-4`}>
                                     <div className={`p-4 rounded-2xl ${m.role === 'user'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-white/5 border border-white/10 text-gray-200'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-white/5 border border-white/10 text-gray-200'
                                         }`}>
                                         <div className="prose prose-invert max-w-none text-sm md:text-base leading-relaxed whitespace-pre-wrap">
                                             {m.content}

@@ -26,7 +26,11 @@ async def chat_with_ai(request: ChatRequest = Body(...)):
         results = []
         if request.include_search and len(request.message.split()) > 2:
             # Simple heuristic: if message is more than 2 words, try searching
-            results = await serpapi_service.search_products(request.message)
+            try:
+                results = await serpapi_service.search_products(request.message)
+            except Exception as e:
+                print(f"Search failed (continuing without results): {e}")
+                results = []
         
         response = await ai_service.get_chat_response(
             user_query=request.message,
