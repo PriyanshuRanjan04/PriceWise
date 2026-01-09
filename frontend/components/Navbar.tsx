@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingBag, MessageSquare, Menu } from 'lucide-react';
+import { ShoppingBag, MessageSquare, Menu, Flame, TrendingDown, Layers, HelpCircle, Heart } from 'lucide-react';
 import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
 import { useEffect } from 'react';
 import api from '@/lib/api';
@@ -38,9 +38,26 @@ const Navbar = () => {
                             <Link href="/products" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <ShoppingBag className="w-4 h-4" /> Products
                             </Link>
+                            <Link href="/deals" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <Flame className="w-4 h-4 text-orange-500" /> Deals
+                            </Link>
+                            <Link href="/#track" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <TrendingDown className="w-4 h-4 text-green-500" /> Track Price
+                            </Link>
+                            <Link href="/categories" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <Layers className="w-4 h-4" /> Categories
+                            </Link>
+                            <Link href="/about" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+                                <HelpCircle className="w-4 h-4" /> How It Works
+                            </Link>
                             <Link href="/chat" className="text-sm font-medium text-gray-400 hover:text-white transition-colors flex items-center gap-2">
                                 <MessageSquare className="w-4 h-4" /> AI Assistant
                             </Link>
+                            <SignedIn>
+                                <Link href="/saved" className="text-sm font-medium text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2">
+                                    <Heart className="w-4 h-4" /> Saved Items
+                                </Link>
+                            </SignedIn>
                         </div>
                     </div>
 

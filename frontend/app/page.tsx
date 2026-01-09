@@ -1,11 +1,12 @@
-'use client';
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
 import ProductCard from '@/components/ProductCard';
 import ChatInterface from '@/components/ChatInterface';
+import LiveDemo from '@/components/LiveDemo';
+import TrustSection from '@/components/TrustSection';
+import ProductDetailsModal from '@/components/ProductDetailsModal';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { Search, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
@@ -17,6 +18,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const handleSearch = async (query: string) => {
     setIsLoading(true);
@@ -103,25 +105,15 @@ export default function Home() {
           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </div>
 
-        {/* Features Row - Only show if not searched */}
+        {/* New Components - Shown only on landing (no search) */}
         {!hasSearched && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-24 max-w-5xl mx-auto"
           >
-            {[
-              { icon: TrendingUp, title: 'Price Tracking', desc: 'Monitor price drops and history trends.' },
-              { icon: Search, title: 'Aggregated Search', desc: 'Search multiple retailers with one click.' },
-              { icon: ShieldCheck, title: 'Verified Deals', desc: 'AI-verified authentic discounts only.' },
-            ].map((feature, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors group">
-                <feature.icon className="w-10 h-10 text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
-              </div>
-            ))}
+            <LiveDemo />
+            <TrustSection />
           </motion.div>
         )}
 
@@ -142,7 +134,10 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard
+                    product={product}
+                    onClick={() => setSelectedProduct(product)}
+                  />
                 </motion.div>
               ))}
             </div>
@@ -181,6 +176,13 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      <ProductDetailsModal
+        product={selectedProduct}
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+      />
+
       <ChatInterface />
     </div>
   );

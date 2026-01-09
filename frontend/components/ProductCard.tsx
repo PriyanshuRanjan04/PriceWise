@@ -6,9 +6,10 @@ import api from '@/lib/api';
 
 interface ProductCardProps {
     product: Product;
+    onClick?: () => void;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, onClick }: ProductCardProps) => {
     const [isTracking, setIsTracking] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +30,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
     return (
         <motion.div
             whileHover={{ y: -10 }}
-            className="group relative bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm hover:border-blue-500/50 hover:bg-white/10 transition-all duration-300 shadow-2xl"
+            onClick={onClick}
+            className="group relative bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm hover:border-blue-500/50 hover:bg-white/10 transition-all duration-300 shadow-2xl cursor-pointer"
         >
             <div className="relative aspect-square w-full bg-white p-6 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent z-10" />
@@ -45,8 +47,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
                         onClick={handleTrack}
                         disabled={isTracking || isLoading}
                         className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xl ${isTracking
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-md'
-                                : 'bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md'
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-md'
+                            : 'bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md'
                             }`}
                     >
                         {isTracking ? (
