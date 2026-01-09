@@ -9,8 +9,10 @@ import ChatInterface from '@/components/ChatInterface';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { Search, Sparkles, TrendingUp, ShieldCheck } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 export default function Home() {
+  const { user, isSignedIn } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -21,10 +23,19 @@ export default function Home() {
     setHasSearched(true);
     setError(null);
     try {
-      // Use params for better encoding
-      const response = await api.get('/api/v1/products/search', {
+      // Parallel: Search Products & Save History (if authed)
+      const searchPromise = api.get('/api/v1/products/search', {
         params: { q: query }
       });
+
+      const historyPromise = isSignedIn && user ? api.post('/api/v1/user/history', {
+        user_id: user.id,
+        type: "search",
+        query: query,
+        timestamp: new Date().toISOString()
+      }).catch(e => console.error("Failed to save history", e)) : Promise.resolve();
+
+      const [response] = await Promise.all([searchPromise, historyPromise]);
 
       if (response.data && response.data.results) {
         setProducts(response.data.results);
