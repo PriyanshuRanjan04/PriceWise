@@ -1,12 +1,31 @@
 import { motion } from 'framer-motion';
 import { Product } from '@/types/product';
-import { ExternalLink, Star, ShoppingCart } from 'lucide-react';
+import { ExternalLink, Star, ShoppingCart, Bell, Check } from 'lucide-react';
+import { useState } from 'react';
+import api from '@/lib/api';
 
 interface ProductCardProps {
     product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+    const [isTracking, setIsTracking] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleTrack = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsLoading(true);
+        try {
+            await api.post('/api/v1/tracker/track', product);
+            setIsTracking(true);
+        } catch (error) {
+            console.error('Failed to track product:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <motion.div
             whileHover={{ y: -10 }}
@@ -19,6 +38,25 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     alt={product.title}
                     className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 relative z-0"
                 />
+
+                {/* Track Button Overlay */}
+                <div className="absolute bottom-4 left-4 right-4 z-20 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <button
+                        onClick={handleTrack}
+                        disabled={isTracking || isLoading}
+                        className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xl ${isTracking
+                                ? 'bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-md'
+                                : 'bg-black/60 hover:bg-black/80 text-white border border-white/10 backdrop-blur-md'
+                            }`}
+                    >
+                        {isTracking ? (
+                            <><Check className="w-3.5 h-3.5" /> Tracking</>
+                        ) : (
+                            <><Bell className="w-3.5 h-3.5" /> Track Price</>
+                        )}
+                    </button>
+                </div>
+
                 <div className="absolute top-4 right-4 z-20">
                     <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider text-white">
                         {product.source}

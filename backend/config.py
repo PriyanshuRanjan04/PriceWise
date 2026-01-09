@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     
     # AI (Optional)
     GROQ_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
     
     # External APIs
     SERPAPI_KEY: str | None = None
