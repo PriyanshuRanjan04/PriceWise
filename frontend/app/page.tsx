@@ -26,10 +26,15 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
+  const [lastQuery, setLastQuery] = useState('');
+
   const handleSearch = async (query: string) => {
+    if (!query.trim()) return;
+
     setIsLoading(true);
     setHasSearched(true);
     setError(null);
+    setLastQuery(query);
 
     // Add to recent searches (prevent duplicates, keep top 5)
     setRecentSearches(prev => {
@@ -180,7 +185,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold mb-2">Search Error</h2>
               <p>{error}</p>
               <button
-                onClick={() => handleSearch('')}
+                onClick={() => handleSearch(lastQuery)}
                 className="mt-6 px-6 py-2 bg-red-400/10 hover:bg-red-400/20 rounded-full text-sm font-bold transition-all"
               >
                 Try Again
