@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'framer-motion';
 import { ShieldCheck, Zap, Bot } from 'lucide-react';
 

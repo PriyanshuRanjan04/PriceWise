@@ -1,3 +1,5 @@
+'use client';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, TrendingDown, Calendar, ArrowUpRight, ExternalLink } from 'lucide-react';
 import { Product } from '@/types/product';
