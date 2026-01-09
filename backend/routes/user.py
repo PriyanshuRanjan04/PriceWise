@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Body
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from models.user import User, UserCreate
 from models.history import HistoryItem
 from database import get_database
@@ -51,3 +52,51 @@ async def add_history(item: HistoryItem):
     db = await get_database()
     await db.history.insert_one(item.dict(by_alias=True))
     return {"message": "History added"}
+
+# --- Bookmarks ---
+
+class BookmarkItem(BaseModel):
+    user_id: str
+    product: dict
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+@router.get("/{clerk_id}/bookmarks")
+async def get_bookmarks(clerk_id: str):
+    db = await get_database()
+    cursor = db.bookmarks.find({"user_id": clerk_id}).sort("timestamp", -1)
+    bookmarks = await cursor.to_list(length=100)
+    
+    for item in bookmarks:
+        item["id"] = str(item["_id"])
+        del item["_id"]
+        
+    return bookmarks
+
+@router.post("/bookmarks")
+async def add_bookmark(item: BookmarkItem):
+    db = await get_database()
+    
+    # Check if already exists
+    existing = await db.bookmarks.find_one({
+        "user_id": item.user_id,
+        "product.product_id": item.product.get("product_id")
+    })
+    
+    if existing:
+        return {"message": "Already bookmarked"}
+
+    await db.bookmarks.insert_one(item.dict(by_alias=True))
+    return {"message": "Bookmark added"}
+
+@router.delete("/{clerk_id}/bookmarks/{product_id}")
+async def remove_bookmark(clerk_id: str, product_id: str):
+    db = await get_database()
+    result = await db.bookmarks.delete_one({
+        "user_id": clerk_id,
+        "product.product_id": product_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Bookmark not found")
+        
+    return {"message": "Bookmark removed"}

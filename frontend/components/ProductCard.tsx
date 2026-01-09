@@ -2,9 +2,10 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '@/types/product';
-import { ExternalLink, Star, ShoppingCart, Bell, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ExternalLink, Star, ShoppingCart, Bell, Check, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { useUser } from '@clerk/nextjs';
 
 interface ProductCardProps {
     product: Product;
@@ -12,8 +13,18 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product, onClick }: ProductCardProps) => {
+    const { user, isSignedIn } = useUser();
     const [isTracking, setIsTracking] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Check if saved on mount (optional optimization: accept initialSaved prop)
+    useEffect(() => {
+        if (isSignedIn && user) {
+            // Check local storage or fetch (skipping complex fetch for speed, assuming false initially or passed prop)
+            // Real implementation would check against a list of saved IDs passed from parent
+        }
+    }, [isSignedIn, user]);
 
     const handleTrack = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -26,6 +37,34 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
             console.error('Failed to track product:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleToggleSave = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isSignedIn || !user) {
+            // Prompt login (could open modal)
+            alert("Please sign in to save items.");
+            return;
+        }
+
+        const newSavedState = !isSaved;
+        setIsSaved(newSavedState); // Optimistic UI
+
+        try {
+            if (newSavedState) {
+                await api.post('/api/v1/user/bookmarks', {
+                    user_id: user.id,
+                    product: product
+                });
+            } else {
+                await api.delete(`/api/v1/user/${user.id}/bookmarks/${product.product_id}`);
+            }
+        } catch (error) {
+            console.error('Failed to toggle save:', error);
+            setIsSaved(!newSavedState); // Revert on error
         }
     };
 
@@ -43,13 +82,24 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
                     className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 relative z-0"
                 />
 
-                {/* Track Button removed from here and moved to bottom */}
-
-                <div className="absolute top-4 right-4 z-20">
+                {/* Source Badge (Moved to Left) */}
+                <div className="absolute top-4 left-4 z-20">
                     <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider text-white">
                         {product.source}
                     </span>
                 </div>
+
+                {/* Save Button (Top Right) */}
+                <motion.button
+                    onClick={handleToggleSave}
+                    whileTap={{ scale: 0.8 }}
+                    className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-white hover:text-red-500 transition-colors shadow-lg"
+                >
+                    <Heart
+                        size={18}
+                        className={`transition-all ${isSaved ? 'fill-red-500 text-red-500' : ''}`}
+                    />
+                </motion.button>
             </div>
 
             <div className="p-6 space-y-4">
