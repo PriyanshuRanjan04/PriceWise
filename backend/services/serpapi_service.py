@@ -63,8 +63,14 @@ class SerpApiService:
                 "thumbnail": item.get("thumbnail"),
                 "rating": item.get("rating"),
                 "reviews": item.get("reviews"),
-                "product_id": item.get("product_id") 
+                "product_id": item.get("product_id") or self._generate_id(item)
             })
         return normalized
+
+    def _generate_id(self, item):
+        import hashlib
+        # Prioritize link as unique identifier
+        unique_str = item.get("link") or (item.get("title", "") + item.get("source", ""))
+        return hashlib.md5(unique_str.encode()).hexdigest()
 
 serpapi_service = SerpApiService()
