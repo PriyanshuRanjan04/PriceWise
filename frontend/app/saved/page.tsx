@@ -7,13 +7,17 @@ import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { Heart, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useUser, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
+import { useUser, RedirectToSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
+import { useUserStore } from '@/store/useUserStore';
 
 export default function SavedPage() {
     const { user, isLoaded, isSignedIn } = useUser();
     const [bookmarks, setBookmarks] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Seed global Zustand store with bookmarked IDs
+    const setBookmarkedIds = useUserStore((s) => s.setBookmarkedIds);
 
     useEffect(() => {
         const fetchBookmarks = async () => {
@@ -23,9 +27,15 @@ export default function SavedPage() {
             try {
                 const response = await api.get(`/api/v1/user/${user.id}/bookmarks`);
                 if (response.data) {
-                    // Normalize backend structure: item is currently { product: {...}, ... }
-                    const products = response.data.map((item: any) => item.product);
+                    // Backend returns [{ user_id, product: {...}, timestamp }, ...]
+                    const products: Product[] = response.data.map((item: any) => item.product);
                     setBookmarks(products);
+
+                    // ✅ Seed Zustand so heart icons across ALL pages reflect saved state
+                    const ids = products
+                        .map((p) => p.product_id)
+                        .filter((id): id is string => Boolean(id));
+                    setBookmarkedIds(ids);
                 }
             } catch (error) {
                 console.error('Failed to fetch bookmarks:', error);
@@ -39,7 +49,13 @@ export default function SavedPage() {
         } else if (isLoaded && !isSignedIn) {
             setIsLoading(false);
         }
-    }, [isLoaded, isSignedIn, user]);
+    }, [isLoaded, isSignedIn, user, setBookmarkedIds]);
+
+    // Listen for bookmark removals from ProductCard — keep local list in sync
+    const bookmarkedIds = useUserStore((s) => s.bookmarkedIds);
+    const visibleBookmarks = bookmarks.filter(
+        (p) => !p.product_id || bookmarkedIds.has(p.product_id)
+    );
 
     if (!isLoaded) {
         return (
@@ -63,7 +79,11 @@ export default function SavedPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold">Saved Items</h1>
-                        <p className="text-gray-400 text-sm mt-1">Your personal wishlist</p>
+                        <p className="text-gray-400 text-sm mt-1">
+                            {visibleBookmarks.length > 0
+                                ? `${visibleBookmarks.length} item${visibleBookmarks.length !== 1 ? 's' : ''} saved`
+                                : 'Your personal wishlist'}
+                        </p>
                     </div>
                 </div>
 
@@ -73,14 +93,16 @@ export default function SavedPage() {
                     </div>
                 ) : (
                     <>
-                        {bookmarks.length > 0 ? (
+                        {visibleBookmarks.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {bookmarks.map((product, idx) => (
+                                {visibleBookmarks.map((product, idx) => (
                                     <motion.div
                                         key={product.product_id || idx}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
                                         transition={{ delay: idx * 0.05 }}
+                                        layout
                                     >
                                         <ProductCard product={product} />
                                     </motion.div>
@@ -96,8 +118,13 @@ export default function SavedPage() {
                                     <Heart className="w-12 h-12 text-gray-500" />
                                 </div>
                                 <h3 className="text-xl font-bold mb-2">No saved items yet</h3>
-                                <p className="text-gray-400 mb-6 max-w-md mx-auto">Start exploring products and save your favorites to track them here.</p>
-                                <Link href="/products" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-bold transition-all">
+                                <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                                    Start exploring products and save your favorites to track them here.
+                                </p>
+                                <Link
+                                    href="/products"
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 font-bold transition-all"
+                                >
                                     Explore Products <ArrowRight size={18} />
                                 </Link>
                             </motion.div>

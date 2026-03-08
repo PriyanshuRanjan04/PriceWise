@@ -1,11 +1,13 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Product } from '@/types/product';
-import { ExternalLink, Star, ShoppingCart, Bell, Check, Heart } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Star, ShoppingCart, Bell, Check, Heart } from 'lucide-react';
+import { useState } from 'react';
 import api from '@/lib/api';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/store/useUserStore';
 
 interface ProductCardProps {
     product: Product;
@@ -14,17 +16,14 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, onClick }: ProductCardProps) => {
     const { user, isSignedIn } = useUser();
-    const [isTracking, setIsTracking] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
-    // Check if saved on mount (optional optimization: accept initialSaved prop)
-    useEffect(() => {
-        if (isSignedIn && user) {
-            // Check local storage or fetch (skipping complex fetch for speed, assuming false initially or passed prop)
-            // Real implementation would check against a list of saved IDs passed from parent
-        }
-    }, [isSignedIn, user]);
+    // Global bookmark state from Zustand — source of truth for heart icon
+    const { bookmarkedIds, addBookmark, removeBookmark } = useUserStore();
+    const isSaved = product.product_id ? bookmarkedIds.has(product.product_id) : false;
+
+    const [isTracking, setIsTracking] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleTrack = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -44,27 +43,41 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
         e.preventDefault();
         e.stopPropagation();
 
+        // Redirect to sign-in if not authenticated
         if (!isSignedIn || !user) {
-            // Prompt login (could open modal)
-            alert("Please sign in to save items.");
+            router.push('/sign-in');
             return;
         }
 
-        const newSavedState = !isSaved;
-        setIsSaved(newSavedState); // Optimistic UI
+        const productId = product.product_id;
+        if (!productId) return;
+
+        // Optimistic update in Zustand
+        if (isSaved) {
+            removeBookmark(productId);
+        } else {
+            addBookmark(productId);
+        }
 
         try {
-            if (newSavedState) {
+            if (!isSaved) {
+                // Was unsaved → now saving
                 await api.post('/api/v1/user/bookmarks', {
                     user_id: user.id,
-                    product: product
+                    product: product,
                 });
             } else {
-                await api.delete(`/api/v1/user/${user.id}/bookmarks/${product.product_id}`);
+                // Was saved → now removing
+                await api.delete(`/api/v1/user/${user.id}/bookmarks/${productId}`);
             }
         } catch (error) {
             console.error('Failed to toggle save:', error);
-            setIsSaved(!newSavedState); // Revert on error
+            // Revert optimistic update on API error
+            if (isSaved) {
+                addBookmark(productId);
+            } else {
+                removeBookmark(productId);
+            }
         }
     };
 
@@ -82,22 +95,29 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
                     className="object-contain w-full h-full group-hover:scale-110 transition-transform duration-500 relative z-0"
                 />
 
-                {/* Source Badge (Moved to Left) */}
+                {/* Source Badge */}
                 <div className="absolute top-4 left-4 z-20">
                     <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-wider text-white">
                         {product.source}
                     </span>
                 </div>
 
-                {/* Save Button (Top Right) */}
+                {/* Save / Heart Button */}
                 <motion.button
                     onClick={handleToggleSave}
-                    whileTap={{ scale: 0.8 }}
-                    className="absolute top-4 right-4 z-20 p-2.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-white hover:text-red-500 transition-colors shadow-lg"
+                    whileTap={{ scale: 0.75 }}
+                    animate={isSaved ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 0.25 }}
+                    className={`absolute top-4 right-4 z-20 p-2.5 rounded-full backdrop-blur-md border shadow-lg transition-colors
+                        ${isSaved
+                            ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                            : 'bg-black/60 border-white/20 text-white hover:bg-white hover:text-red-500'
+                        }`}
+                    aria-label={isSaved ? 'Remove from saved' : 'Save product'}
                 >
                     <Heart
                         size={18}
-                        className={`transition-all ${isSaved ? 'fill-red-500 text-red-500' : ''}`}
+                        className={`transition-all duration-200 ${isSaved ? 'fill-red-500 text-red-500' : ''}`}
                     />
                 </motion.button>
             </div>
@@ -151,6 +171,7 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-[2] relative flex items-center justify-center gap-2 bg-white text-black hover:bg-blue-500 hover:text-white py-4 rounded-2xl font-bold transition-all duration-300 group/btn overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <span className="relative z-10 flex items-center gap-2">
                             View Deal <ShoppingCart size={18} />

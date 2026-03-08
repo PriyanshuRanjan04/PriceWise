@@ -60,7 +60,7 @@ const Navbar = () => {
                             <Link href="/deals" className="text-xs font-bold text-gray-500 hover:text-orange-500 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
                                 <Flame className="w-3.5 h-3.5" /> Deals
                             </Link>
-                            <Link href="/#track" className="text-xs font-bold text-gray-500 hover:text-green-500 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
+                            <Link href="/track" className="text-xs font-bold text-gray-500 hover:text-green-500 transition-colors flex items-center gap-1.5 uppercase tracking-wide">
                                 <TrendingDown className="w-3.5 h-3.5" /> Track
                             </Link>
                             <Link href="/about" className="text-xs font-bold text-gray-500 hover:text-white transition-colors flex items-center gap-1.5 uppercase tracking-wide">
@@ -144,7 +144,7 @@ const Navbar = () => {
                             <Link href="/deals" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-2 text-sm text-gray-400 hover:text-white">
                                 <Flame size={16} /> Hot Deals
                             </Link>
-                            <Link href="/#track" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-2 text-sm text-gray-400 hover:text-white">
+                            <Link href="/track" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-2 text-sm text-gray-400 hover:text-white">
                                 <TrendingDown size={16} /> Track Prices
                             </Link>
                             <Link href="/about" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-2 text-sm text-gray-400 hover:text-white">
