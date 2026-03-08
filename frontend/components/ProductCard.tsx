@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { Product } from '@/types/product';
 import { Star, ShoppingCart, Bell, Check, Heart } from 'lucide-react';
 import { useState } from 'react';
-import api from '@/lib/api';
-import { useUser } from '@clerk/nextjs';
+import api, { withAuth } from '@/lib/api';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -15,10 +15,11 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product, onClick }: ProductCardProps) => {
-    const { user, isSignedIn } = useUser();
+    const { isSignedIn, getToken } = useAuth();
+    const { user } = useUser();
     const router = useRouter();
 
-    // Global bookmark state from Zustand — source of truth for heart icon
+    // Global bookmark state from Zustand — single source of truth for heart icon
     const { bookmarkedIds, addBookmark, removeBookmark } = useUserStore();
     const isSaved = product.product_id ? bookmarkedIds.has(product.product_id) : false;
 
@@ -30,7 +31,7 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
         e.stopPropagation();
         setIsLoading(true);
         try {
-            await api.post('/api/v1/tracker/track', product);
+            await api.post('/api/v1/tracker/track', { ...product, clerk_id: user?.id });
             setIsTracking(true);
         } catch (error) {
             console.error('Failed to track product:', error);
@@ -43,7 +44,7 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
         e.preventDefault();
         e.stopPropagation();
 
-        // Redirect to sign-in if not authenticated
+        // Redirect unauthenticated users to sign-in
         if (!isSignedIn || !user) {
             router.push('/sign-in');
             return;
@@ -52,28 +53,38 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
         const productId = product.product_id;
         if (!productId) return;
 
-        // Optimistic update in Zustand
-        if (isSaved) {
+        // Capture current state BEFORE optimistic update
+        const wasAlreadySaved = isSaved;
+
+        // Optimistic update — flip immediately for snappy UX
+        if (wasAlreadySaved) {
             removeBookmark(productId);
         } else {
             addBookmark(productId);
         }
 
         try {
-            if (!isSaved) {
-                // Was unsaved → now saving
-                await api.post('/api/v1/user/bookmarks', {
-                    user_id: user.id,
-                    product: product,
-                });
+            // Get Clerk JWT for every request
+            const authConfig = await withAuth(getToken);
+
+            if (!wasAlreadySaved) {
+                // Saving: POST /api/v1/user/bookmarks
+                await api.post(
+                    '/api/v1/user/bookmarks',
+                    { user_id: user.id, product },
+                    authConfig
+                );
             } else {
-                // Was saved → now removing
-                await api.delete(`/api/v1/user/${user.id}/bookmarks/${productId}`);
+                // Removing: DELETE /api/v1/user/{clerk_id}/bookmarks/{product_id}
+                await api.delete(
+                    `/api/v1/user/${user.id}/bookmarks/${productId}`,
+                    authConfig
+                );
             }
         } catch (error) {
-            console.error('Failed to toggle save:', error);
-            // Revert optimistic update on API error
-            if (isSaved) {
+            console.error('Bookmark API error:', error);
+            // Revert optimistic update on failure
+            if (wasAlreadySaved) {
                 addBookmark(productId);
             } else {
                 removeBookmark(productId);
@@ -102,7 +113,7 @@ const ProductCard = ({ product, onClick }: ProductCardProps) => {
                     </span>
                 </div>
 
-                {/* Save / Heart Button */}
+                {/* Heart / Save Button */}
                 <motion.button
                     onClick={handleToggleSave}
                     whileTap={{ scale: 0.75 }}

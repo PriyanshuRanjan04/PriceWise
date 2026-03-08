@@ -3,39 +3,33 @@
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ProductCard from '@/components/ProductCard';
-import api from '@/lib/api';
+import api, { withAuth } from '@/lib/api';
 import { Product } from '@/types/product';
 import { Heart, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useUser, RedirectToSignIn } from '@clerk/nextjs';
+import { useUser, useAuth, RedirectToSignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useUserStore } from '@/store/useUserStore';
 
 export default function SavedPage() {
     const { user, isLoaded, isSignedIn } = useUser();
+    const { getToken } = useAuth();
     const [bookmarks, setBookmarks] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    // Seed global Zustand store with bookmarked IDs
-    const setBookmarkedIds = useUserStore((s) => s.setBookmarkedIds);
 
     useEffect(() => {
         const fetchBookmarks = async () => {
             if (!user) return;
-
             setIsLoading(true);
             try {
-                const response = await api.get(`/api/v1/user/${user.id}/bookmarks`);
+                // ✅ Pass Clerk JWT so the request is authenticated
+                const config = await withAuth(getToken);
+                const response = await api.get(`/api/v1/user/${user.id}/bookmarks`, config);
                 if (response.data) {
-                    // Backend returns [{ user_id, product: {...}, timestamp }, ...]
                     const products: Product[] = response.data.map((item: any) => item.product);
                     setBookmarks(products);
-
-                    // ✅ Seed Zustand so heart icons across ALL pages reflect saved state
-                    const ids = products
-                        .map((p) => p.product_id)
-                        .filter((id): id is string => Boolean(id));
-                    setBookmarkedIds(ids);
+                    // NOTE: Zustand store is seeded globally by BookmarkHydrator in layout.tsx.
+                    // No need to seed here — avoids race conditions on first-load.
                 }
             } catch (error) {
                 console.error('Failed to fetch bookmarks:', error);
@@ -49,7 +43,7 @@ export default function SavedPage() {
         } else if (isLoaded && !isSignedIn) {
             setIsLoading(false);
         }
-    }, [isLoaded, isSignedIn, user, setBookmarkedIds]);
+    }, [isLoaded, isSignedIn, user, getToken]);
 
     // Listen for bookmark removals from ProductCard — keep local list in sync
     const bookmarkedIds = useUserStore((s) => s.bookmarkedIds);

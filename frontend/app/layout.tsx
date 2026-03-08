@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider } from '@clerk/nextjs';
+import BookmarkHydrator from "@/components/BookmarkHydrator";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,9 +27,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          {/* Seeds Zustand bookmarkedIds from backend on every page load */}
+          <BookmarkHydrator />
           {children}
         </body>
       </html>
