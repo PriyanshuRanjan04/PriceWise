@@ -69,7 +69,11 @@ export default function ChatPage() {
             const response = await api.post('/api/v1/chat/', {
                 message: userMessage,
                 include_search: true,
-                user_id: user?.id
+                user_id: user?.id,
+                history: messages.slice(-6).map(m => ({
+                    role: m.role,
+                    content: m.content,
+                })),
             });
 
             setMessages(prev => [...prev, {
