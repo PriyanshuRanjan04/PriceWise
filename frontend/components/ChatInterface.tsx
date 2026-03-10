@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, X, MessageSquare, Loader2, ShoppingBag } from 'lucide-react';
+import { Send, Sparkles, X, MessageSquare, ShoppingBag } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
 import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -15,6 +14,7 @@ interface Message {
     relatedProducts?: Product[];
 }
 
+// ---------- Typing animation for real AI messages ----------
 const TypingMessage = ({ content }: { content: string }) => {
     const [displayedContent, setDisplayedContent] = useState('');
     const [isComplete, setIsComplete] = useState(false);
@@ -23,7 +23,7 @@ const TypingMessage = ({ content }: { content: string }) => {
         setDisplayedContent('');
         setIsComplete(false);
         let i = 0;
-        const speed = 15; // ms per char
+        const speed = 15;
 
         const timer = setInterval(() => {
             if (i < content.length) {
@@ -48,9 +48,75 @@ const TypingMessage = ({ content }: { content: string }) => {
     );
 };
 
+// ---------- Pulsing dots ----------
+const PulsingDots = () => (
+    <span className="inline-flex gap-[3px] items-center ml-2">
+        {[0, 1, 2].map(i => (
+            <motion.span
+                key={i}
+                className="w-[5px] h-[5px] rounded-full bg-blue-400"
+                animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+                transition={{
+                    duration: 1.1,
+                    repeat: Infinity,
+                    delay: i * 0.18,
+                    ease: 'easeInOut',
+                }}
+            />
+        ))}
+    </span>
+);
+
+// ---------- Stage definitions ----------
+const LOADING_STAGES = [
+    { after: 0, text: '🔍 Searching products across retailers...' },
+    { after: 3000, text: '📊 Comparing prices and deals...' },
+    { after: 8000, text: '🤖 Analyzing with AI...' },
+] as const;
+
+// ---------- Multi-stage loading bubble ----------
+const LoadingBubble = () => {
+    const [stageIndex, setStageIndex] = useState(0);
+
+    useEffect(() => {
+        const timers: ReturnType<typeof setTimeout>[] = [];
+        LOADING_STAGES.forEach((stage, idx) => {
+            if (idx === 0) return; // stage 0 is the initial state
+            const t = setTimeout(() => setStageIndex(idx), stage.after);
+            timers.push(t);
+        });
+        return () => timers.forEach(clearTimeout);
+    }, []);
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6, transition: { duration: 0.2 } }}
+            className="flex flex-col gap-2 items-start"
+        >
+            <div className="max-w-[85%] p-3 rounded-2xl rounded-tl-sm bg-white/10 text-gray-200">
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={stageIndex}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-center text-sm font-medium text-gray-300 whitespace-nowrap"
+                    >
+                        {LOADING_STAGES[stageIndex].text}
+                        <PulsingDots />
+                    </motion.span>
+                </AnimatePresence>
+            </div>
+        </motion.div>
+    );
+};
+
+// ---------- Main component ----------
 export default function ChatInterface() {
     const { isSignedIn, user } = useUser();
-    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
@@ -60,9 +126,7 @@ export default function ChatInterface() {
 
     useEffect(() => {
         const storedCount = localStorage.getItem('guest_chat_usage');
-        if (storedCount) {
-            setGuestUsageCount(parseInt(storedCount));
-        }
+        if (storedCount) setGuestUsageCount(parseInt(storedCount));
     }, []);
 
     const scrollToBottom = () => {
@@ -71,13 +135,13 @@ export default function ChatInterface() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isOpen, isLoading]); // Scroll on new messages or loading state
+    }, [messages, isOpen, isLoading]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim() || isLoading) return;
 
-        // Guest Limit Check
+        // Guest limit check
         if (!isSignedIn) {
             if (guestUsageCount >= 5) {
                 setMessages(prev => [...prev, {
@@ -100,21 +164,20 @@ export default function ChatInterface() {
             const response = await api.post('/api/v1/chat/', {
                 message: userMessage,
                 include_search: true,
-                user_id: user?.id // Send user ID if signed in
+                user_id: user?.id,
             });
 
             const data = response.data;
-
             setMessages(prev => [...prev, {
                 role: 'assistant',
                 content: data.response,
-                relatedProducts: data.results
+                relatedProducts: data.results,
             }]);
         } catch (error) {
             console.error('Chat error:', error);
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: "I'm having trouble connecting right now. Please try again later."
+                content: "I'm having trouble connecting right now. Please try again later.",
             }]);
         } finally {
             setIsLoading(false);
@@ -196,7 +259,6 @@ export default function ChatInterface() {
                                                 <ReactMarkdown>{msg.content}</ReactMarkdown>
                                             </div>
                                         ) : (
-                                            /* Key prop forces re-render of typing effect when content changes (unlikely for history, but good for stream-like feel) */
                                             <TypingMessage key={msg.content} content={msg.content} />
                                         )}
                                     </div>
@@ -229,12 +291,11 @@ export default function ChatInterface() {
                                 </motion.div>
                             ))}
 
-                            {isLoading && (
-                                <div className="flex items-center gap-2 text-gray-400 text-sm">
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    AI is thinking...
-                                </div>
-                            )}
+                            {/* Multi-stage loading bubble */}
+                            <AnimatePresence>
+                                {isLoading && <LoadingBubble />}
+                            </AnimatePresence>
+
                             <div ref={messagesEndRef} />
                         </div>
 
