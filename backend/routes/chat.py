@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     include_search: bool = True
     context_products: Optional[List] = None
     user_id: Optional[str] = None # Clerk ID
+    history: Optional[List[dict]] = []
 
 @router.post("/")
 async def chat_with_ai(request: ChatRequest = Body(...)):
@@ -34,7 +35,8 @@ async def chat_with_ai(request: ChatRequest = Body(...)):
         
         response = await ai_service.get_chat_response(
             user_query=request.message,
-            search_results=results or request.context_products
+            search_results=results or request.context_products,
+            history=request.history or []
         )
         
         # Save to History if Authenticated

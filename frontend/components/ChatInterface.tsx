@@ -165,6 +165,10 @@ export default function ChatInterface() {
                 message: userMessage,
                 include_search: true,
                 user_id: user?.id,
+                history: messages.slice(-6).map(m => ({
+                    role: m.role,
+                    content: m.content,
+                })),
             });
 
             const data = response.data;
